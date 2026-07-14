@@ -67,6 +67,15 @@ const storeSettings = (value) => {
   storage.setItem(STORAGE_KEY, JSON.stringify(value));
 };
 
+const stripServerManagedSettings = (settings) => {
+  if (!settings || typeof settings !== "object") {
+    return settings;
+  }
+
+  const { bookmarks, ...cleanedSettings } = settings;
+  return cleanedSettings;
+};
+
 const initialSettings = {
   direction: "ltr",
   paletteMode: "light",
@@ -74,6 +83,7 @@ const initialSettings = {
   pinNav: true,
   currentTenant: null,
   showDevtools: false,
+  showAdvancedTools: false,
   customBranding: {
     colour: "#F77F00",
     logo: null,
@@ -83,6 +93,7 @@ const initialSettings = {
   breadcrumbMode: "hierarchical",
   bookmarkSidebar: true,
   bookmarkPopover: false,
+  compactNav: false,
 };
 
 const initialState = {
@@ -106,13 +117,20 @@ export const SettingsProvider = (props) => {
     const restored = restoreSettings();
 
     if (restored) {
-      if (!restored.currentTheme && restored.paletteMode) {
-        restored.currentTheme = { value: restored.paletteMode, label: restored.paletteMode };
+      const cleanedRestored = stripServerManagedSettings(restored);
+
+      if (!cleanedRestored.currentTheme && cleanedRestored.paletteMode) {
+        cleanedRestored.currentTheme = {
+          value: cleanedRestored.paletteMode,
+          label: cleanedRestored.paletteMode,
+        };
       }
+
+      storeSettings(cleanedRestored);
 
       setState((prevState) => ({
         ...prevState,
-        ...restored,
+        ...cleanedRestored,
         isInitialized: true,
       }));
     } else {
@@ -142,16 +160,20 @@ export const SettingsProvider = (props) => {
     setState((prevState) => {
       // Filter out null and undefined values to prevent resetting settings
       const filteredSettings = Object.entries(settings).reduce((acc, [key, value]) => {
-        if (value !== null && value !== undefined) {
+        if (key !== "bookmarks" && value !== null && value !== undefined) {
           acc[key] = value;
         }
         return acc;
       }, {});
 
-      return {
+      const updatedSettings = stripServerManagedSettings({
         ...prevState,
         ...filteredSettings,
-      };
+      });
+
+      storeSettings(updatedSettings);
+
+      return updatedSettings;
     });
   }, []);
 
@@ -172,13 +194,17 @@ export const SettingsProvider = (props) => {
         handleUpdate,
         isCustom,
         setLastUsedFilter: (page, filter) => {
-          setState((prevState) => ({
-            ...prevState,
-            lastUsedFilters: {
-              ...prevState.lastUsedFilters,
-              [page]: filter,
-            },
-          }));
+          setState((prevState) => {
+            const updated = stripServerManagedSettings({
+              ...prevState,
+              lastUsedFilters: {
+                ...prevState.lastUsedFilters,
+                [page]: filter,
+              },
+            });
+            storeSettings(updated);
+            return updated;
+          });
         },
       }}
     >

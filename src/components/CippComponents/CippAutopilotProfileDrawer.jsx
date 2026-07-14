@@ -109,8 +109,8 @@ export const CippAutopilotProfileDrawer = ({
                 {createProfile.isLoading
                   ? "Creating..."
                   : createProfile.isSuccess
-                  ? "Create Another"
-                  : "Create Profile"}
+                    ? "Create Another"
+                    : "Create Profile"}
               </Button>
               <Button variant="outlined" onClick={handleCloseDrawer}>
                 Close
@@ -154,10 +154,14 @@ export const CippAutopilotProfileDrawer = ({
               type="autoComplete"
               label="Language"
               name="languages"
-              options={languageList.map(({ language, tag, "Geographic area": geographicArea }) => ({
-                value: tag,
-                label: `${language} - ${geographicArea}`, // Format as "language - geographic area" for display
-              }))}
+              options={[
+                { value: "os-default", label: "Operating system default" },
+                { value: "user-select", label: "User Select" },
+                ...languageList.map(({ language, tag, "Geographic area": geographicArea }) => ({
+                  value: tag,
+                  label: `${language} - ${geographicArea}`, // Format as "language - geographic area" for display
+                })),
+              ]}
               formControl={formControl}
               multiple={false}
             />
@@ -221,7 +225,7 @@ export const CippAutopilotProfileDrawer = ({
               name="HideChangeAccount"
               formControl={formControl}
               disabled={true}
-              helperText="This setting requires Hybrid Azure AD Join which is not supported in CIPP"
+              helperText="This setting requires Hybrid Microsoft Entra Join which is not supported in CIPP"
             />
             <CippFormComponent
               type="switch"
